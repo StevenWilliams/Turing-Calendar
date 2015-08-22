@@ -1,21 +1,5 @@
-
 import Grid in "grid.tu", Calendar in "calendar_shift.tu", sButton in "button.tu"
 setscreen ("graphics:560;560")
-
-
-function getInteger (prompt : string) : int
-    var stringa : string
-    var inta : int := -1
-    loop % prompts until user enters a valid integer
-        put prompt + " " ..
-        get stringa
-        exit when strintok (stringa)
-    end loop
-    inta := strint (stringa)
-    result inta
-end getInteger
-
-
 
 
 var GridObject : pointer to Grid
@@ -27,36 +11,30 @@ new sButton, backButton
 var nextButton : pointer to sButton
 new sButton, nextButton
 
-var xinterval : int := 50
-var yinterval : int := 50
+
+const months : array 1 .. 12 of string := init ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+%variables used to store date/time information
+var day, hour, minute, second, dayOfWeek, year, month : int := -1
+
+%variables that are used to store mouse information
+var mouseX, mouseY : int := -1
+var mouseButton : int := -1
+var buttonUpDown : int := -1
 
 
-
-
-%GridObject -> initialize(50, 50, 500, 500, xinterval, yinterval, green)
 
 
 procedure drawGrid (x1 : int, y1 : int, x2 : int, y2 : int, vert : int, hor : int, color : int)
-    
-    var xspace := x2 - x1
-    var yspace := y2 - y1
-    
-    var xinterval := floor (xspace div vert)
-    var yinterval := floor (yspace div hor)
+    var xinterval := floor ((x2-x1) div vert)
+    var yinterval := floor ((y2-y1) div hor)
     
     GridObject -> initialize (x1, y1, x2, y2, xinterval, yinterval, color)
     GridObject -> drawGridLines
 end drawGrid
 
 
-procedure putColor (error : string, pcolor : int)
-    var defcolor : int := whatcolor ()
-    color (pcolor)
-    put error
-        color (defcolor)
-end putColor
-    
-var months : array 1 .. 12 of string := init ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
 
 
 
@@ -116,8 +94,6 @@ procedure drawCalendar (month : int, year : int)
     var shift : real := -1
     shift := Calendar.getShift (month, year)
     
-    %Draws calendar
-    
     drawCalendarG (days, shift, month, year, 6)
 end drawCalendar
 
@@ -128,39 +104,12 @@ procedure drawButtons
     nextButton -> draw(1)
 end drawButtons
 
-
-
-
-
-%%=================MAIN PROGRAM=======================
-%%====================================================
-var month : int := -1
-var year : int := -1
-var days : int := -1
-var monthstring : int := -1
-
-
-
-%RANDOM TIME STUFF
-var day : int := -1
-var hour : int := -1
-var minute : int := -1
-var second : int := -1
-var dayOfWeek : int := -1
-Time.SecParts (Time.Sec, year, month, day, dayOfWeek, hour, minute, second)
-
-%variables that control mouse
-var mouseX, mouseY : int := -1
-var mouseButton : int := -1
-var buttonUpDown : int := -1
-
-
-procedure waitForMouseClick
+procedure waitForButtonPress
     Mouse.ButtonWait ("down", mouseX, mouseY, mouseButton, buttonUpDown)
     Mouse.ButtonWait ("up", mouseX, mouseY, mouseButton, buttonUpDown)
-end waitForMouseClick
+end waitForButtonPress
 
-procedure processMouseClick
+procedure processButtonPress
     if backButton -> pointInButton (mouseX, mouseY) then
         month := month - 1
         if month = 0 then
@@ -175,58 +124,19 @@ procedure processMouseClick
             year := year + 1
         end if
     end if
-    
-end processMouseClick
+end processButtonPress
 
+%%=================MAIN PROGRAM=======================
+%%====================================================
+
+Time.SecParts (Time.Sec, year, month, day, dayOfWeek, hour, minute, second) %get current time/date info.
 
 loop
-    if month > 12 or month < 1 then
-        putColor ("Month is invalid", 12)
-    elsif length (intstr (year)) not= 4 then
-        putColor ("Only supports 4 digit years", 12) % for now...
-    else
-        Draw.FillBox (0, 0, maxx, maxy, black)
-        drawGrid (5, 5, 550, 500, 7, 7, green)
-        drawButtons
-        drawCalendar (month, year)
-    end if
-    waitForMouseClick
-    processMouseClick
-    /*
-    loop
-    %Wait for mouse click
-    %Check if mouse click is on the button
-    exit when hasch
-    end loop
-    year := getInteger("Enter a year:")
-    month := getInteger("Enter a month:")
-    */
+    Draw.FillBox (0, 0, maxx, maxy, black)
+    drawGrid (5, 5, 550, 500, 7, 7, green)
+    drawButtons
+    drawCalendar (month, year)
+    waitForButtonPress
+    processButtonPress
     cls
 end loop
-
-
-
-
-
-
-/*
-for day : 1..28
-GridObject -> setGridBoxText(row, column, intstr(day))
-column := column + 1
-if day mod 7 = 0 then
-row := row - 1
-column := 0
-end if
-%drawline(xcoord, 0, xcoord, maxy, red)
-%drawline(0, ycoord, maxx, ycoord, red)
-end for
-*/
-
-
-
-/*
-%Grid.drawGridLines(50, 50, 300, 300, 30, 30, black)
-
-
-drawGrid(50, 50, 300, 300, 7, 8, black)
-*/
